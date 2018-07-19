@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- BOOTSTRAP CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css" integrity="sha384-Smlep5jCw/wG7hdkwQ/Z5nLIefveQRIY9nfy6xoR1uRYBtpZgI6339F5dgvm/e9B" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+    <title>Friend Finder</title>
+</head>
+<body>
+    <div class= "container">
+        <!-- QUESTIONS -->
+        <div class="questions">
+            <h1>Survey Questions</h1>
+            <hr>
+            <form class="needs-validation">
+                <h2>About you</h2>
+                <div class="form-group">
+                      <label for="name">Name (required)</label>
+                      <input class="form-control" id="name" required>
+                </div>
+                <div class="form-group">
+                        <label for="name">Link to photo (required)</label>
+                        <input class="form-control" id="photo" required>
+                </div>
+                <hr>
+                <h2>Questions</h2>
+                <div class="form-group" id="questionsDiv">
+                </div>
+                <a class="btn btn-primary btn-lg" href="#" role="button" id="submit">Submit</a>
+            </form>
+        </div>
+        <!-- FOOTER -->
+        <footer class="footer nav-link">
+            <a href="/api/friends_list">API Friends List | </a>
+            <a href="https://github.com/elizabethjmz/FriendFinder"  target="_blank"> GitHub Repo</a>
+        </footer>
+    </div>
+    
+    <!-- BOOTSTRAP -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js" integrity="sha384-o+RDsa0aLu++PJvFqy8fFScvbHFLtbvScb8AjopnFD+iEQ7wo/CG0xlczd+2O/em" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+        $( document ).ready(function() {
+            //Array with all the questions to be displayed
+            var questions = [
+                "You consider yourself more practical than creative.",
+                "You feel superior to other people.",
+                "Being organized is more important to you than being adaptable.",
+                "It is often difficult for you to relate to other people’s feelings.",
+                "In a discussion, truth should be more important than people’s sensitivities.",
+                "An interesting book or a video game is often better than a social event.",
+                "You do not let other people influence your actions.",
+                "You are more of a natural improviser than a careful planner.",
+                "You would rather improvise than spend time coming up with a detailed plan.",
+                "You are a relatively reserved and quiet person."
+            ];
+            //Dropdown values for each question
+            var response = ["","1 - Strongly Agree", "2", "3", "4", "5 - Strongly Disagree"]
+            var questionsDiv = $("#questionsDiv");
+            //Assign question#
+            var question_counter=1; 
+            var values = 0;
+            for (var i=0; i<questions.length; i++) {
+                //Creating questions tag for each attribute in questions array
+                var question_name = "question" +question_counter;
+                questionsDiv.append("<br><h5 " + "name= '"+question_name+"'>"+question_counter+": "+questions[i]+"</h5>");
+                
+                //Creating dropdown tag and values for each question
+                var select_q = '<select class="form-control" id="'+ question_name+'">';
+                for (var j=0; j<response.length; j++) {
+                    select_q += '<option value="'+values+'">'+response[j]+'</option>';
+                    values++;
+                }
+                values=0;
+                questionsDiv.append(select_q+"</select>");
+                question_counter++;
+            }
+
+            //Validations on submit
+            $("#submit").on("click", function (event){
+                var name_field = $("#name").val().trim();
+                var photo_field = $("#name").val().trim();
+               
+                if (name_field ==="" || photo_field ==="" ) {
+                    console.log("Fields are empty");
+                }
+                else {
+                   // console.log("Form is submitted");
+                    
+                    
+                    var scoresArr = [];
+                    
+                    for (var index=1; index<=10; index++){
+                        var getQuestion=  "#question"+index;
+                        var new_int = $(getQuestion).val();
+                        scoresArr.push(parseInt(new_int));
+                        console.log(scoresArr);
+                    }
+                    console.log(typeof(scoresArr));
+                    
+                          
+                    var addToFriendList = {
+                        name: $("#name").val().trim(),
+                        pic_url:$("#photo").val().trim(),
+                        /*
+                        scoresArr: function(){
+                            var scoresArr = [];
+                            for (var index=1; index<=10; index++){
+                            var getQuestion=  "#question"+index;
+                            var new_int = $(getQuestion).val();
+                            console.log("New int value: "+ new_int);
+                            console.log(typeof("Type of new_int: "+new_int));
+                            scoresArr.push(parseInt(new_int));
+                            console.log(scoresArr);
+                            }
+                            return scoresArr;
+                        }, */
+                        scores: scoresArr//this.scoresArr,
+                    };
+
+                    console.log(addToFriendList);
+                    
+                    $.post("/api/friends_list", addToFriendList,
+                    function(data) {
+
+                    // Clear the form when submitting
+                        $("#name").val("");
+                        $("#photo").val("");
+                        for (var z=1; z<=10; z++){
+                           var emptyQuestion = "#question"+z;
+                           $(emptyQuestion).val("");
+                           console.log($(emptyQuestion));
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
