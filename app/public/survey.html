@@ -27,11 +27,30 @@
                 </div>
                 <hr>
                 <h2>Questions</h2>
+                
                 <div class="form-group" id="questionsDiv">
-                </div>
-                <a class="btn btn-primary btn-lg" href="#" role="button" id="submit">Submit</a>
+                </div>  
+                <a class="btn btn-primary btn-lg" href="#" role="button" id="submit" data-dismiss="modal">Submit</a>
             </form>
         </div>
+
+        <!-- Validations modal -->
+        <div class="modal" tabindex="-1" role="dialog" id="error">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                    <div class="modal-header">
+    
+                    </div>
+                    <div class="modal-body align-items-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END OF VALIDATIONS MODAL -->
+
+        
+
         <!-- FOOTER -->
         <footer class="footer nav-link">
             <a href="/api/friends_list">API Friends List | </a>
@@ -69,75 +88,142 @@
             for (var i=0; i<questions.length; i++) {
                 //Creating questions tag for each attribute in questions array
                 var question_name = "question" +question_counter;
-                questionsDiv.append("<br><h5 " + "name= '"+question_name+"'>"+question_counter+": "+questions[i]+"</h5>");
+                questionsDiv.append("<br><h6 " + "name= '"+question_name+"'>"+question_counter+": "+questions[i]+"</h6>");
                 
                 //Creating dropdown tag and values for each question
                 var select_q = '<select class="form-control" id="'+ question_name+'">';
                 for (var j=0; j<response.length; j++) {
-                    select_q += '<option value="'+values+'">'+response[j]+'</option>';
+                    
+                    select_q += '<option value='+values+'>'+response[j]+'</option>';
                     values++;
                 }
                 values=0;
                 questionsDiv.append(select_q+"</select>");
                 question_counter++;
             }
+            
+            
 
             //Validations on submit
             $("#submit").on("click", function (event){
                 var name_field = $("#name").val().trim();
                 var photo_field = $("#name").val().trim();
-               
-                if (name_field ==="" || photo_field ==="" ) {
-                    console.log("Fields are empty");
+
+               //Function to display validation errors & match results in same modal
+                function modalAlert(message,tag,name){
+                    if (tag==="#error") {
+                        $("#submit").attr("data-toggle", "modal");
+                        $("#submit").attr("data-target", tag);
+                        $(".modal-header").empty();
+                        $(".modal-body").empty();
+                        $(".modal-body").append('<p id="error-message"></p>');
+                        $(".modal-header").prepend('<h5 class="modal-title" id="windowTitle"><i class="fas fa-exclamation-triangle" id="icon"> Form cannot be submitted</i></h5>');
+                        $("#error-message").text(message);
+                        $(".modal").hide();
+                    }
+                    else {
+                        $("#submit").attr("data-toggle", "modal");
+                        $("#submit").attr("data-target", "#error");
+                        $(".modal-header").empty();
+                        $("#error-message").empty();
+                        $(".modal-body").empty();
+                        $(".modal").show();
+                        $(".modal-header").prepend('<h5 class="modal-title"><i class="fas fa-search"> Hey! We Found Your New Friend </i></h5>');
+                        $(".modal-body").append('<p> Name: '+name+'</p>'+'<img src="#" class="img-thumbnail" alt="Your_Match" id="match_pic">');
+                        $("#match_pic").attr("src", tag);
+                        $(".modal-content").append('<div class="modal-footer"></button><button type="button" class="btn btn-secondary" onClick="history.go(0)">Start New Survey</button></div>')
+                    }
+                }
+                //Function to validate if all questions have been answered
+                function ifEmpty(){
+                    for (var m=1; m<=10; m++){
+                        question = "#question"+m;
+                        if($(question).val() == "0"){
+                            return true
+                        }
+                        
+                    }
+                    return false;
+                }
+
+                //Validation of fields being populated or selected
+                if (name_field ==="" || photo_field ==="" ||(ifEmpty())) {
+        
+                    if(name_field ==="" || photo_field ===""){
+                        modalAlert("There are some required fields missing!","#error");
+                    }
+                    else if (ifEmpty()) {
+                        modalAlert("Please select answers for all questions!","#error");
+                    }
                 }
                 else {
-                   // console.log("Form is submitted");
-                    
-                    
-                    var scoresArr = [];
-                    
+                   // Form will be submitted!
+                    var scoresArr = []; //Array where current score will be stored
+
+                    //To store the selected answers from user into scoresArr
                     for (var index=1; index<=10; index++){
                         var getQuestion=  "#question"+index;
                         var new_int = $(getQuestion).val();
                         scoresArr.push(parseInt(new_int));
-                        console.log(scoresArr);
                     }
-                    console.log(typeof(scoresArr));
                     
-                          
+                    //To save user information into an object      
                     var addToFriendList = {
                         name: $("#name").val().trim(),
                         pic_url:$("#photo").val().trim(),
-                        /*
-                        scoresArr: function(){
-                            var scoresArr = [];
-                            for (var index=1; index<=10; index++){
-                            var getQuestion=  "#question"+index;
-                            var new_int = $(getQuestion).val();
-                            console.log("New int value: "+ new_int);
-                            console.log(typeof("Type of new_int: "+new_int));
-                            scoresArr.push(parseInt(new_int));
-                            console.log(scoresArr);
-                            }
-                            return scoresArr;
-                        }, */
-                        scores: scoresArr//this.scoresArr,
+                        scores: scoresArr
                     };
 
-                    console.log(addToFriendList);
+
+                    // Clear the form when submitting form
+                    $("#name").val("");
+                    $("#photo").val("");
+                    for (var z=1; z<=10; z++){
+                        var emptyQuestion = "#question"+z;
+                        $(emptyQuestion).val("");
+                    }
                     
+                    //To update API with current information from user
                     $.post("/api/friends_list", addToFriendList,
                     function(data) {
-
-                    // Clear the form when submitting
-                        $("#name").val("");
-                        $("#photo").val("");
-                        for (var z=1; z<=10; z++){
-                           var emptyQuestion = "#question"+z;
-                           $(emptyQuestion).val("");
-                           console.log($(emptyQuestion));
-                        }
+                        
                     });
+                    
+                    //To retrieve all users scores to find the match
+                    $.get("/api/friends_list", addToFriendList,
+                    function(data) {
+                        var getDif = 0;
+                        var sumDif = 0;
+                        var totalDif=[];
+                        var indexOfMatch =0; 
+                        //Iterate on data except the last added score which is the current score
+                        for (var l=0; l<(data.length -1); l++){
+                            for (m=0;m<10;m++){
+                                //To get the difference between array of scores and current score
+                                getDif = Math.abs(parseInt(data[l].scores[m]) - parseInt(scoresArr[m]));
+                                sumDif+=getDif;
+                            }
+                            totalDif.push(sumDif); //add the total difference into an array
+                            sumDif=0; //to reset sum counter for next score
+                        }
+                        
+                        //To verify which is the lowest number in array to get the index of the match
+                        for (var n=0; n<totalDif.length; n++){
+                            if(totalDif[n] <= totalDif[indexOfMatch]) {
+                                indexOfMatch =n;
+                            }
+                        }
+
+                        //Get the URL of the match
+                        var getPicOfMatch = data[indexOfMatch].pic_url;
+                        //Get the picture of the match
+                        var getMatchName = data[indexOfMatch].name;
+
+                        //To display the match picture and Name in Modal
+                       modalAlert("Hey, We Found Your New Friend!",getPicOfMatch,getMatchName);
+                        
+                    });
+                    
                 }
             });
         });
